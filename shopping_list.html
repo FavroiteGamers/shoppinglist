@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Shopping List</title>
+<style>
+input[type="file"]::-webkit-file-upload-button::after {
+  content: none;
+}
+</style>
+</head>
+<body>
+<h1>My Shopping List</h1>
+
+<ul id="list"></ul>
+
+<button onclick="addItem()">Add Item</button>
+<button onclick="clearList()">Clear List</button>
+<button onclick="downloadList()">Download List</button>
+
+<input type="file" id="file-input" onchange="loadList()">
+
+<script>
+function addItem() {
+  var li = document.createElement("li");
+  var input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Item";
+  li.appendChild(input);
+  var price = document.createElement("input");
+  price.type = "text";
+  price.placeholder = "Price";
+  li.appendChild(price);
+  var source = document.createElement("input");
+  source.type = "text";
+  source.placeholder = "Source";
+  li.appendChild(source);
+  var removeButton = document.createElement("button");
+  removeButton.textContent = "Remove";
+  removeButton.onclick = function() {
+    this.parentElement.remove();
+  };
+  li.appendChild(removeButton);
+  list.appendChild(li);
+}
+
+function clearList() {
+  var list = document.getElementById("list");
+  while (list.firstChild) {
+    list.removeChild(list.firstChild);
+  }
+}
+
+function downloadList() {
+  var list = document.getElementById("list");
+  var items = [];
+  for (var i = 0; i < list.children.length; i++) {
+    var item = list.children[i];
+    var input = item.children[0];
+    var price = item.children[1];
+    var source = item.children[2];
+    items.push({
+      "item": input.value,
+      "price": price.value,
+      "source": source.value
+    });
+  }
+  var jsonData = JSON.stringify(items);
+  var downloadLink = document.createElement("a");
+  downloadLink.href = "data:application/json;charset=utf-8," + encodeURIComponent(jsonData);
+  downloadLink.download = "shopping-list.json";
+  downloadLink.click();
+}
+
+function loadList() {
+  var list = document.getElementById("list");
+  var fileInput = document.getElementById("file-input");
+  var file = fileInput.files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      var jsonData = event.target.result;
+      var items = JSON.parse(jsonData);
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var li = document.createElement("li");
+        var input = document.createElement("input");
+        input.type = "text";
+        input.value = item.item;
+        li.appendChild(input);
+        var price = document.createElement("input");
+        price.type = "text";
+        price.value = item.price;
+        li.appendChild(price);
+        var source = document.createElement("input");
+        source.type = "text";
+        source.value = item.source;
+        li.appendChild(source);
+        var removeButton = document.createElement("button");
+        removeButton.textContent = "Remove";
+        removeButton.onclick = function() {
+          this.parentElement.remove();
+        };
+        li.appendChild(removeButton);
+        list.appendChild(li);
+      }
+    };
+    reader.readAsText(file);
+  }
+}
+function sendEmail() {
+  var list = document.getElementById("list");
+  var items = [];
+  for (var i = 0; i < list.children.length; i++) {
+    var item = list.children[i];
+    var input = item.children[0];
+    var price = item.children[1];
+    var source = item.children[2];
+    items.push({
+      "item": input.value,
+      "price": price.value,
+      "source": source.value
+    });
+  }
+
+  var emailData = JSON.stringify(items);
+
+  var email = document.getElementById("email");
+  var subject = document.getElementById("subject");
+
+  var smtpHost = "smtp.gmail.com";
+  var smtpPort = 465;
+  var smtpUser = "your_email_address";
+  var smtpPassword = "your_password";
+
+  var mailer = new XMLHttpRequest();
+  mailer.open("POST", "https://api.mailgun.net/v3/your_domain/messages");
+  mailer.setRequestHeader("Authorization", "Bearer your_mailgun_api_key");
+  mailer.setRequestHeader("Content-Type", "application/json");
+
+  mailer.onreadystatechange = function() {
+    if (mailer.readyState === 4) {
+      if (mailer.status === 200) {
+        console.log("Email sent!");
+      } else {
+        console.log("Error sending email: " + mailer.status);
+      }
+    }
+  };
+
+  mailer.send(JSON.stringify({
+    from: "you@your_domain.com",
+    to: email.value,
+    subject: subject.value,
+    text: "Here is your shopping list: " + emailData
+  }))}
+</script>
+</body>
+</html>
+
